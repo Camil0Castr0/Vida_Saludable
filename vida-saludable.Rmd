@@ -1,0 +1,396 @@
+---
+title: "Vida saludable"
+author: "Camilo Castro"
+date: "19/8/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r,message = FALSE,   echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(kableExtra)
+library(knitr)
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(plotly)
+#install.packages("patchwork")
+library(patchwork)
+library(MASS)
+library(lubridate)
+library(readr)
+library(janitor)
+library(magrittr)
+library(RColorBrewer)
+library(wesanderson)
+library(scales)
+library(gghalves)
+library(tidyverse)
+
+```
+
+
+```{r,message = FALSE,   echo=FALSE, include=FALSE}
+data <- read_csv("actividad_vidasaludable.csv")
+```
+
+<div style="text-align: justify">
+### Introducción
+
+Con el objeto de estudiar las actividades realizadas en la comunidad para fomentar los hábitos y estilos de vida saludable en la ciudad de Pereira, se realizó un análisis exploración de la base de datos públicada el 22 de noviembre del 2020 por la Alcaldía de Pereira, en la página [Vida saludable en Pereira](https://www.datos.gov.co/Comercio-Industria-y-Turismo/Actividades-realizadas-para-fomentar-los-h-bitos-y/ivs9-ud5m), Portal Único del Estado Colombiano, único punto de acceso digital del ciudadano a todos los trámites, servicios, información pública y ejercicios de participación, colaboración y control social que ofrecen las entidades del Estado.
+
+
+### Base de datos
+A continuación se presenta la base de datos sumnisistrada por Alcaldía de Pereira-datos abiertos, que contienen información acerca de los estilos de vida, características socidemográficas, entre otras; se encuentra información de 65528 personas, con 10 variables.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+kable(data[1:17,],caption= "Tabla 1: Actividades realizadas en la comunidad para fomentar los hábitos y estilos de vida saludable en la ciudad de Pereira") %>%
+  kable_styling(full_width = F) %>%
+    column_spec(5, width = "25em")%>%
+    kable_styling(fixed_thead = F)%>%
+   scroll_box(width = "800px", height = "450px")
+
+
+```
+
+```{r, message = FALSE,   echo=FALSE, include=FALSE}
+data%<>% mutate_if(is.character, as.factor)
+data%>% clean_names
+
+
+a2<-which(data$Edad==530)
+length(a2)
+for (k in a2){
+  data$Edad[k]=53
+}
+a4<-which(data$Edad==504)
+length(a4)
+for (k in a4){
+  data$Edad[k]=54
+}
+
+a6<-which(data$Edad==322)
+length(a6)
+for (k in a6){
+  data$Edad[k]=32
+}
+
+t_sex<-data%>%group_by(Sexo)%>%
+  summarise(frecuencia = n(),porcentaje= round(n()*100/65528,2))
+Sexo=c("Femenino","Masculino","Total")
+tab=data.frame(Sexo=t_sex$Sexo,
+               Frecuencia=t_sex$frecuencia, Porcentaje=t_sex$porcentaje)
+t_reg <- data %>%
+  group_by(Regimen) %>% summarise(Frecuencia=n(),Porcentaje=round(n()*100/nrow(data),2 ))
+tab2 <- data.frame(t_reg)
+
+t_area <- data %>% 
+  group_by(Area) %>% summarise(Frecuencia=n(),Porcentaje=round(n()*100/nrow(data),2))
+tab3 <-data.frame(t_area) 
+
+t_etnia <- data %>% 
+  group_by(Etnias) %>% summarise(Frecuencia=n(),Porcentaje=round(n()*100/nrow(data),3))
+tab4 <- data.frame(t_etnia)
+
+
+t_comu <- data %>% 
+  group_by(`Comuna / Corregimiento`) %>% summarise(Frecuencia=n(),Porcentaje=round(n()*100/nrow(data),3))
+tab6 <- data.frame(t_comu)
+names(tab6) <- c("Comuna y Corregimiento","Frecuencia","Porcentaje")
+
+t_cond <- data %>% 
+  group_by(Condiciones) %>% summarise(Frecuencia=n(),Porcentaje=round(n()*100/nrow(data),3))
+tab7 <- data.frame(t_cond)
+
+t_SR <- data %>%
+  group_by(Sexo,Regimen) %>% summarise(Frecuencia=n(),Porcentaje=round(n()*100/nrow(data),2 ))
+tab8 <- data.frame(t_SR)
+
+```
+
+
+<div style="text-align: justify">
+Para analizar las actividades realizadas en la comunidad para fomentar los hábitos y estilos de vida saludable en la ciudad de Pereira, de acuerdo con el género de las 65528 personas que hacen parte del estudio, 51046(77.8%) son mujeres y 14482(22.15) son hombres.(Ver *Tabla 1* y *Figura 1*).
+
+```{r,echo=FALSE}
+tab %>% ggplot(aes(x="",y=Porcentaje,fill=Sexo))+geom_bar(stat = "identity")+
+  geom_text(aes(label=percent(Porcentaje/100)),
+            position=position_stack(vjust=0.5),color="white",size=5)+coord_polar("y")+
+  scale_fill_manual(values = wes_palette("Darjeeling2"))+
+  theme_void()+labs(x=NULL,y=NULL)+
+  labs(title = "Figura 1: Distribución de personas que realizaron actividad 
+para fomentar estilos de vida saludable,  según el género 
+en el departamento del Atlántico")+theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10))+
+        theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10))
+
+```
+
+
+<div style="text-align: justify">
+En la *Figura 2* se observa la distribución por regimen en el departamento del Risaralda, realizaron actividades que fomentarán sus habitos o estilos de vida saludable.
+Notemos que mas de la mitad de las personas encuestada pertenecen al regimen Contributivo (ver *Tabla 2*). 
+
+```{r,echo=FALSE}
+tab2 %>% ggplot(aes(x="",y=Porcentaje,fill=Regimen))+geom_bar(stat = "identity")+
+  geom_text(aes(label=percent(Porcentaje/100)),
+            position=position_stack(vjust=0.5),color="white",size=5)+coord_polar("y")+
+ scale_fill_manual(values = wes_palette("Darjeeling2"))+theme_void()+
+  labs(x=NULL,y=NULL,title = "Figura 2: Distribución de personas que realizaron actividad 
+para fomentar estilos de vida saludable,  según el regimen 
+en el departamento del Atlántico")+
+theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10))+
+        theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10))
+```
+
+<div style="text-align: justify">
+En el *Figura 3* se observa la distribución de aquellas personas en el
+departamento del Risaralda, realizaron actividades que fomentarán sus habitos o estilos de vida saludable, teniendo en cuenta el area. 
+Gran parte de la muestra se encuentra en el area urbano con mas del 91% (ver *Tabla 3*). 
+
+```{r,echo=FALSE}
+tab3 %>% ggplot(aes(x="",y=Porcentaje,fill=Area))+geom_bar(stat = "identity")+
+  geom_text(aes(label=percent(Porcentaje/100)),
+            position=position_stack(vjust=0.5),color="white",size=5)+coord_polar("y")+
+  scale_fill_manual(values = wes_palette("Darjeeling2"))+
+  theme_void()+ labs(x=NULL,y=NULL,title = "Figura 3: Distribución de personas que realizaron actividad 
+para fomentar estilos de vida saludable,  según el area
+en el departamento del Atlántico")+
+  theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10),
+        axis.text.x=element_text(size = 8),axis.text.y=element_text(size = 8),
+        axis.title.y = element_text(vjust=-0.5, colour="black", size=rel(1.2)),
+        axis.title.x = element_text( vjust=-0.5, colour="black", size=rel(1.2)))
+```
+
+<div style="text-align: justify">
+
+En el *Figura 4* se observa diagrama de barra de aquellas personas en el
+departamento del Risaralda, realizaron actividades que fomentarán sus habitos o estilos de vida saludable, teniendo en cuenta el género y regimen. 
+Mas de 30000 son mujeres que pertenecen al regimen contributivo sin embargo hay pocas mujeres que pertenecen al regimen sisben  a diferencia del genero masculino que esta distribuido "escalonadamente" frente al regimen.  
+
+```{r,echo=FALSE}
+tab8 %>% ggplot(aes(x=Sexo,y=Frecuencia,fill=Regimen))+geom_col(position = 'dodge')+
+  geom_text(aes(label = Porcentaje),vjust = -0.5,size=3.5,position=position_dodge(0.9))+
+  scale_fill_manual(values = wes_palette("Darjeeling2"))+theme_minimal()+
+  labs(title = 'Figura 4: Diagrama de barra de personas que realizaron actividad 
+para fomentar estilos de vida saludable,  según el sexo y 
+regimen en el departamento del Atlántico',y=NULL)+
+  theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10),
+        axis.text.x=element_text(size = 8),axis.text.y=element_text(size = 8),
+        axis.title.y = element_text(vjust=-0.5, colour="black", size=rel(1.2)),
+        axis.title.x = element_text( vjust=-0.5, colour="black", size=rel(1.2)))
+```
+
+<div style="text-align: justify">
+
+En el *Figura 5* se observa diagrama de barra de aquellas personas en el
+departamento del Risaralda, realizaron actividades que fomentarán sus habitos o estilos de vida saludable, teniendo en cuenta el género y area. 
+
+```{r , echo=FALSE}
+bplot2<-data.frame(table(data$Sexo,data$Area))
+bplot<-cbind(bplot2,Porcentaje=round(bplot2$Freq/sum(bplot2$Freq)*100,2))
+names(bplot)<-c("Sexo","Area","Frecuencia","Porcentaje")
+
+ggplot(data=bplot, aes(x=Area, y=Porcentaje, fill=Sexo))+
+  scale_x_discrete(labels = c("Rural","Urbano"))+
+  geom_bar(stat="identity", position="dodge")+ 
+  geom_text(aes(label = Porcentaje),vjust = -0.5,size=3.5,position=position_dodge(0.9))+
+   scale_fill_manual(values = wes_palette("Darjeeling2"))+
+  scale_y_continuous(limit = c(0,80))+
+  labs(title='Figura 5: Diagrama de barra de distribuciòn de las personas que realizaron actividad
+fìsica de acuerdo con el Area y el gènero', y = "Porcentaje" , x = "Area")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10),
+        axis.text.x=element_text(size = 8),axis.text.y=element_text(size = 8),
+        axis.title.y = element_text(vjust=-0.5, colour="black", size=rel(1.2)),
+        axis.title.x = element_text( vjust=-0.5, colour="black", size=rel(1.2)))
+```
+
+En el *Figura 6* se observa diagrama de barra de aquellas personas en el
+departamento del Risaralda, realizaron actividades que fomentarán sus habitos o estilos de vida saludable, teniendo en cuenta la comuna y corregimiento.
+La Comuna Centro y Comuna San Joaquin tienen una poblacion considerable con estilo de vida saludable  no obstante la comuna Rio Otún, comuna Rio café y comuna Olimpica tiene mas de 5000 habitantes con buenos habitos sien embargo la comuna Oso y comuna el Poblado estan proximos.
+Notemos que hay una gran diferencia entre habitantes de comuna y corregimiento, siendo los habitantes de comuna mas participativos en el estilo de vida saludable (ver *Tabla 4*).
+
+```{r,echo=FALSE}
+tab6 %>% 
+  ggplot(aes(x=reorder(`Comuna y Corregimiento`,Frecuencia,),y=Frecuencia,fill = `Comuna y Corregimiento`))+
+      geom_col()+coord_flip()+gghighlight::gghighlight(Frecuencia>4500)+
+  labs(title = "Figura 6: Diagrama de barra de personas que realizaron actividad 
+para fomentar estilos de vida saludable,  según la comuna y 
+corregimiento en el departamento del Atlántico",y=NULL,x=NULL)+guides(fill=FALSE)+
+  theme_minimal()+scale_fill_manual(values = c("gray68","#36648B","gray75","gray68","gray75","gray68","#8DB6CD"))+
+  theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10),
+        axis.text.x=element_text(size = 8),axis.text.y=element_text(size = 8),
+        axis.title.y = element_text(vjust=-0.5, colour="black", size=rel(1.2)),
+        axis.title.x = element_text( vjust=-0.5, colour="black", size=rel(1.2)))
+```
+<div style="text-align: justify">
+En el *Figura 7* se observa diagrama de barra de aquellas personas en el
+departamento del Risaralda, realizaron actividades que fomentarán sus habitos o estilos de vida saludable, teniendo en cuenta su condicion.
+56205(85.78%) personas tienen ninguna condicion no obstante 9323 (14.22%) cuenta con alguna condicion (ver *Tabla 5*). 
+
+```{r,echo=FALSE}
+tab7 %>% ggplot(aes(x=reorder(Condiciones,Frecuencia),y=Frecuencia,fill=Condiciones))+geom_col()+coord_flip()+
+  labs(x="Condiciones",y=NULL,title = "Figura 7: Diagrama de barra de personas 
+que realizaron actividad para fomentar 
+estilos de vida saludable,  según su 
+condicion en el departamento del Atlántico")+
+  gghighlight::gghighlight(Frecuencia>20000)+scale_fill_manual(values = "#36648B")+theme_minimal()+guides(fill=FALSE)+
+  theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10),
+        axis.text.x=element_text(size = 8),axis.text.y=element_text(size = 8),
+        axis.title.y = element_text(vjust=-0.5, colour="black", size=rel(1.2)),
+        axis.title.x = element_text( vjust=-0.5, colour="black", size=rel(1.2)))
+
+```
+
+
+<div style="text-align: justify">
+En el *Figura 8* se observa histograma de aquellas personas en el
+departamento del Risaralda, realizaron actividades que fomentarán sus habitos o estilos de vida saludable, teniendo en cuenta el sexo y edad. 
+Se aprecia una interesante distribucion binomial para el genero femenino siendo las mujeres jovenes y las mujeres adulta mayor con la mayor participacion en el estilo de vida saludable. 
+
+```{r,echo=FALSE}
+data %>% 
+    ggplot(mapping = aes(x=Edad,fill=Sexo,color=Sexo))+
+  geom_histogram(binwidth = 1,alpha=0.5)+
+  scale_fill_manual(values = wes_palette("Darjeeling1"))+
+  labs(y=NULL,title = "Figura 8: Histograma de personas que realizaron actividad para fomentar 
+estilos de vida saludable, según el sexo y edad en el departamento del Atlántico")+
+  theme_minimal()+theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10),
+        axis.text.x=element_text(size = 8),axis.text.y=element_text(size = 8),
+        axis.title.y = element_text(vjust=-0.5, colour="black", size=rel(1.2)),
+        axis.title.x = element_text( vjust=-0.5, colour="black", size=rel(1.2)))
+```
+
+<div style="text-align: justify">
+En el *Figura 9* se observa histograma de aquellas personas en el
+departamento del Risaralda, realizaron actividades que fomentarán sus habitos o estilos de vida saludable, teniendo en cuenta el,regimen, sexo y edad. podemos decir que las mujeres son las que tienen mayor participacion de estilo de vida saludable en los distintos regimen. 
+
+```{r,echo=FALSE}
+data %>% 
+    ggplot(mapping = aes(x=Edad,fill=Sexo,color=Sexo))+
+  geom_histogram(binwidth = 5,alpha=0.5)+
+  scale_fill_manual(values = wes_palette("Darjeeling1"))+
+  facet_wrap(vars(Regimen))+labs(title="",y=NULL)+
+  labs(title = "Figura 9: Histograma de personas que realizaron actividad para fomentar estilos de 
+vida saludable,  según el regimen, el sexo y edad en el departamento del Atlántico")+
+  theme_minimal()+theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10),
+        axis.text.x=element_text(size = 8),axis.text.y=element_text(size = 8),
+        axis.title.y = element_text(vjust=-0.5, colour="black", size=rel(1.2)),
+        axis.title.x = element_text( vjust=-0.5, colour="black", size=rel(1.2)))
+```
+
+<div style="text-align: justify">
+En el *Figura 10* se observa la distribución de aquellas personas en el
+departamento del Risaralda, realizaron actividades que fomentarán sus habitos o estilos de vida saludable, teniendo en cuenta el regimen y la edad. 
+
+```{r,echo=FALSE}
+data %>% 
+ggplot(aes(x = fct_rev(Regimen), y = Edad)) +
+  geom_half_boxplot(aes(fill = Regimen), side = "l", width = 0.5, nudge = 0.1)+
+  geom_half_violin(aes(fill =Regimen ), side = "r") +
+  scale_fill_manual(values = wes_palette("Darjeeling2"))+
+  labs(x=NULL,title ='Figura 10: Distribución de personas que realizaron actividad para fomentar estilos de vida
+saludable, según el género y la edad, en el departamento del Atlántico ')+
+  guides(color = F, fill = F) + 
+  theme_minimal()+
+  theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10),
+        axis.text.x=element_text(size = 8),axis.text.y=element_text(size = 8),
+        axis.title.y = element_text(vjust=-0.5, colour="black", size=rel(1.2)),
+        axis.title.x = element_text( vjust=-0.5, colour="black", size=rel(1.2)))+
+  coord_flip()
+```
+
+
+<div style="text-align: justify">
+En el *Figura 11* se observa la distribución de aquellas personas en el
+departamento del Risaralda, realizaron actividades que fomentarán sus habitos o estilos de vida saludable, teniendo en cuenta el género y la edad. 
+
+```{r, message=FALSE,echo=FALSE, include=T}
+data %>% 
+  ggplot(aes(x = fct_rev(Sexo), y = Edad)) +
+  geom_half_boxplot(aes(fill = Sexo,color=Sexo), side = "l", width = 0.5, nudge = 0.1)+
+  geom_half_violin(aes(fill =Sexo,color=Sexo), side = "r") +
+  scale_fill_manual(values = wes_palette("Darjeeling2"))+
+  labs(x='Genero',title ='Figura 11: Distribución de personas que realizaron actividad para fomentar estilos de vida
+saludable, según el género y la edad, en el departamento del Atlántico ' )+
+  guides(color = F, fill = F) + 
+  theme_minimal()+
+   theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title=element_text(size=10) , legend.text=element_text(size=10),
+        axis.text.x=element_text(size = 8),axis.text.y=element_text(size = 8),
+        axis.title.y = element_text(vjust=-0.5, colour="black", size=rel(1.2)),
+        axis.title.x = element_text( vjust=-0.5, colour="black", size=rel(1.2)))+
+  coord_flip()
+
+```
+
+### Anexos
+
+# Tabla 1 #
+
+
+```{r, message = FALSE,   echo=FALSE, include=T}
+tab%>%
+  kbl(caption = "Tabla 1. Frecuencia absoluta y porcentual según el género") %>%
+  kable_styling(full_width = F)
+```
+
+# Tabla 2 #
+
+```{r , echo=FALSE}
+tab2%>%
+  kbl(caption = "Tabla 2. Frecuencia absoluta y porcentual según el regimen") %>%
+  kable_styling(full_width = F)
+```
+
+# Tabla 3 #
+
+```{r,echo=FALSE}
+tab3%>%
+  kbl(caption = "Tabla 3. Frecuencia absoluta y porcentual según el area") %>%
+  kable_styling(full_width = F)
+```
+
+# Tabla 4 #
+```{r,echo=FALSE}
+tab6%>%
+  kbl(caption = "Tabla 5. Frecuencia absoluta y porcentual segun comuna / corregimiento") %>%
+   kable_styling(full_width = F) %>%
+    column_spec(1, width = "25em")%>%
+    kable_styling(fixed_thead = F)%>%
+   scroll_box(width = "800px", height = "450px")
+```
+
+# Tabla 5 #
+
+```{r,echo=FALSE}
+tab7%>%
+  kbl(caption = "Tabla 6. Frecuencia absoluta y porcentual según condiciones") %>%
+   kable_styling(full_width = F) %>%
+    column_spec(1, width = "25em")%>%
+    kable_styling(fixed_thead = F)%>%
+   scroll_box(width = "800px", height = "450px")
+```
+
+
+
+
+
+
+
+
+
